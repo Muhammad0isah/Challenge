@@ -11,5 +11,5 @@ submission = pd . read_csv ( submission_file )
 12 # Load ground truth ( hidden )
 truth = pd.read_csv('data/test_labels.csv')
 # Compute F1 score
-score = f1_score ( truth ['target '] , submission ['target '] , average ='macro ')
+score = f1_score(truth["label"], submission["predicted_label"], average="macro")
 print ( f'Submission F1 Score : { score :.4f}')
