@@ -32,6 +32,17 @@ jobs:
           echo "${{ secrets.TESTREAL }}" > data/ground_truth.csv
           echo "Ground truth first line:"
           head -1 data/ground_truth.csv
+  
+      - name: Prevent multiple submissions per team
+        run: |
+              for file in submissions/*.csv; do
+                TEAM=$(basename "$file" .csv)
+
+                if grep -q "^$TEAM," leaderboard/leaderboard.csv; then
+                  echo "❌ Team $TEAM has already submitted. Submission rejected."
+                  exit 1
+                fi
+              done
 
       - name: Score submissions
         run: |
