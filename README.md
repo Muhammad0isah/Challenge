@@ -104,7 +104,7 @@ Build a GNN that can navigate the noise and make accurate predictions by:
 Your submissions will be evaluated on the test set using the overall classification correctness 
 
 ## 🏆 Winning Criteria
-The winner will be determined by the submission that achieves the best average rank across all three metrics.
+The winner will be determined by the submission that achieves the best classification accuracy .
 ###  Submission Process
 
 1. Fork this repository
