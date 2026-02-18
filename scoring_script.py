@@ -1,17 +1,34 @@
 import pandas as pd
-from sklearn . metrics import f1_score
 import sys
-#update to include the automated leaderboard.
-# Usage : python scoring_script .py submissions / file .csv
 
-submission_file = sys . argv [1]
-truth_file = sys.argv[2]
+def validate_submission(submission_file):
+    df = pd.read_csv(submission_file)
 
-#Load submission
-submission = pd.read_csv( submission_file )
+    # basic checks
+    if "cell_type" not in df.columns:
+        raise ValueError("Missing column: cell_type")
 
-12 # Load ground truth ( hidden )
-truth = pd.read_csv(truth_file)
-# Compute F1 score
-score = f1_score(truth["cell_type"], submission["cell_type"], average="macro")
-print(f"SCORE={score:.4f}")
+    if df.isnull().any().any():
+        raise ValueError("Submission contains NaNs")
+
+    print("VALID")
+
+def score_submission(submission_file, truth_file):
+    from sklearn.metrics import accuracy_score  # lazy import
+
+    submission = pd.read_csv(submission_file)
+    truth = pd.read_csv(truth_file)
+
+    score = accuracy_score(truth["cell_type"], submission["cell_type"])
+    print(f"SCORE={score:.4f}")
+
+if __name__ == "__main__":
+    if sys.argv[1] == "--validate-only":
+        # validate all csvs in submissions/
+        import glob
+        for file in glob.glob("submissions/*.csv"):
+            validate_submission(file)
+    else:
+        submission_file = sys.argv[1]
+        truth_file = sys.argv[2]
+        score_submission(submission_file, truth_file)
