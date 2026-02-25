@@ -1,49 +1,112 @@
-// Load CSV and populate table
+const CSV_URL =
+  "https://raw.githubusercontent.com/NoorMajdoub/Challenge/main/leaderboard/leaderboard.csv";
+
+let currentData = [];
+let sortAsc = true;
+
+// Load leaderboard
 async function loadLeaderboard() {
-
-const response = await fetch(
-  "https://raw.githubusercontent.com/NoorMajdoub/Challenge/main/leaderboard/leaderboard.csv?ts=" + Date.now()
-);
-
-    console.log("response")
+    const response = await fetch(CSV_URL + "?ts=" + Date.now());
     const text = await response.text();
-    const rows = text.trim().split("\n");
-    const tableBody = document.querySelector("#leaderboard tbody");
-    console.log("CSV text:", text);
-    tableBody.innerHTML = "";  // clear existing rows
 
-    for (let row of rows) {
-        const [team, score] = row.split(/[,|\t]/);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${team}</td><td>${parseFloat(score).toFixed(4)}</td>`;
-        tableBody.appendChild(tr);
-    }
+    const rows = text.trim().split("\n");
+    currentData = rows
+    .map(r => {
+        const [team, score] = r.split(/[,|\t]/);
+        const parsedScore = parseFloat(score);
+
+        return {
+            team: team?.trim(),
+            score: parsedScore
+        };
+    })
+    .filter(entry =>
+        entry.team &&
+        Number.isFinite(entry.score)
+    );
+
+    currentData.sort((a, b) => b.score - a.score);
+
+    updateStats();
+    updatePodium();
+    renderTable(currentData);
 }
 
-// Search functionality
-document.getElementById("searchBox").addEventListener("input", function() {
-    const filter = this.value.toLowerCase();
-    const rows = document.querySelectorAll("#leaderboard tbody tr");
-    rows.forEach(row => {
-        const team = row.cells[0].textContent.toLowerCase();
-        row.style.display = team.includes(filter) ? "" : "none";
+// Stats
+function updateStats() {
+    document.getElementById("teamCount").textContent =
+        `${currentData.length} teams`;
+
+    document.getElementById("bestScore").textContent =
+        `Best score: ${currentData[0].score.toFixed(4)}`;
+
+    document.getElementById("lastUpdated").textContent =
+        `Last updated: ${new Date().toLocaleString()}`;
+}
+
+// Podium
+function updatePodium() {
+    const podium = currentData.slice(0, 3);
+
+    const map = ["first", "second", "third"];
+    podium.forEach((entry, i) => {
+        document.getElementById(`${map[i]}Team`).textContent = entry.team;
+        document.getElementById(`${map[i]}Score`).textContent =
+            entry.score.toFixed(4);
     });
+}
+
+// Table
+function renderTable(data) {
+    const tbody = document.querySelector("#leaderboard tbody");
+    tbody.innerHTML = "";
+
+    data.forEach((entry, index) => {
+        const tr = document.createElement("tr");
+
+        // Rank display (medals for top 3)
+        const rankDisplay =
+            index === 0 ? "🥇" :
+            index === 1 ? "🥈" :
+            index === 2 ? "🥉" :
+            index + 1;
+
+        tr.innerHTML = `
+            <td class="rank-cell">${rankDisplay}</td>
+            <td>${entry.team}</td>
+            <td>${entry.score.toFixed(4)}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Search
+document.getElementById("searchBox").addEventListener("input", function () {
+    const filter = this.value.toLowerCase();
+    const filtered = currentData.filter(e =>
+        e.team.toLowerCase().includes(filter)
+    );
+    renderTable(filtered);
 });
 
-// Simple sort
-function sortTable(colIndex) {
-    const table = document.getElementById("leaderboard");
-    const rows = Array.from(table.tBodies[0].rows);
-    const asc = table.getAttribute("data-sort-asc") !== "true";
-    rows.sort((a, b) => {
-        let x = colIndex === 1 ? parseFloat(a.cells[colIndex].textContent) : a.cells[colIndex].textContent.toLowerCase();
-        let y = colIndex === 1 ? parseFloat(b.cells[colIndex].textContent) : b.cells[colIndex].textContent.toLowerCase();
-        return asc ? (x > y ? 1 : -1) : (x < y ? 1 : -1);
-    });
-    rows.forEach(row => table.tBodies[0].appendChild(row));
-    table.setAttribute("data-sort-asc", asc);
+// Sort
+function sortTable(col) {
+    if (col === 2) {
+        currentData.sort((a, b) =>
+            sortAsc ? a.score - b.score : b.score - a.score
+        );
+    } else if (col === 1) {
+        currentData.sort((a, b) =>
+            sortAsc
+                ? a.team.localeCompare(b.team)
+                : b.team.localeCompare(a.team)
+        );
+    }
+    sortAsc = !sortAsc;
+    renderTable(currentData);
 }
 
-// Load leaderboard on page load
+// Init
 loadLeaderboard();
-setInterval(loadLeaderboard,30000)
+setInterval(loadLeaderboard, 30000);
