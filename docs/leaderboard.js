@@ -56,20 +56,30 @@ function updatePodium() {
     });
 }
 
-// Table
 function renderTable(data) {
     const tbody = document.querySelector("#leaderboard tbody");
     tbody.innerHTML = "";
 
-    data.forEach((entry, index) => {
-        const tr = document.createElement("tr");
+    data.forEach((entry) => {
 
-        // Rank display (medals for top 3)
-        const rankDisplay =
-            index === 0 ? "1  🥇" :
-            index === 1 ? "2  🥈" :
-            index === 2 ? "3  🥉" :
-            index + 1;
+        // Find real rank from full leaderboard
+        const realIndex = currentData.findIndex(
+            e => e.team === entry.team && e.score === entry.score
+        );
+
+        let rankDisplay;
+
+        if (realIndex === 0) {
+            rankDisplay = "1 🥇";
+        } else if (realIndex === 1) {
+            rankDisplay = "2 🥈";
+        } else if (realIndex === 2) {
+            rankDisplay = "3 🥉";
+        } else {
+            rankDisplay = realIndex + 1;
+        }
+
+        const tr = document.createElement("tr");
 
         tr.innerHTML = `
             <td class="rank-cell">${rankDisplay}</td>
